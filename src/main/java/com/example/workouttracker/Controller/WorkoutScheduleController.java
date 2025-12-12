@@ -1,25 +1,22 @@
 package com.example.workouttracker.Controller;
 
-import com.example.workouttracker.DTO.WorkoutScheduleDTO;
+import com.example.workouttracker.DTO.WorkoutScheduleRequestDTO;
+import com.example.workouttracker.DTO.WorkoutScheduleResponseDTO;
 import com.example.workouttracker.Entity.Workout;
 import com.example.workouttracker.Entity.WorkoutSchedule;
 import com.example.workouttracker.Exceptions.ResourceNotFoundException;
 import com.example.workouttracker.Mapper.WorkoutScheduleMapper;
-import com.example.workouttracker.Repository.WorkoutRepository;
 import com.example.workouttracker.Repository.WorkoutScheduleRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PostFilter;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.access.prepost.PreFilter;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/workout_schedule")
@@ -34,7 +31,7 @@ class WorkoutScheduleController {
     }
     @PostFilter("filterObject.username == authentication.name")
     @GetMapping("")
-    public List<WorkoutScheduleDTO> getSchedules(Authentication authentication) {
+    public List<WorkoutScheduleResponseDTO> getSchedules(Authentication authentication) {
         List<WorkoutSchedule> workoutSchedules = this.workoutScheduleRepository.findAll();
         List<Workout> workouts;
         List<Workout> sortedWorkouts;
@@ -49,25 +46,25 @@ class WorkoutScheduleController {
                     .toList();
             workoutSchedule.setWorkouts(sortedWorkouts);
         }
-        return this.workoutScheduleMapper.workoutScheduleListToWorkoutScheduleDTOList(workoutSchedules);
+        return this.workoutScheduleMapper.toResponseDTOList(workoutSchedules);
     }
     @PreAuthorize("isAuthenticated()")
     @PostMapping("")
-    public ResponseEntity<WorkoutScheduleDTO> addSchedule(@RequestBody WorkoutScheduleDTO scheduleDTO) {
-        WorkoutSchedule schedule = workoutScheduleMapper.workoutScheduleDTOToWorkoutSchedule(scheduleDTO);
-        WorkoutScheduleDTO outputSchedule = workoutScheduleMapper.workoutScheduleToWorkoutScheduleDTO(
+    public ResponseEntity<WorkoutScheduleResponseDTO> addSchedule(@RequestBody WorkoutScheduleRequestDTO scheduleDTO) {
+        WorkoutSchedule schedule = workoutScheduleMapper.toEntity(scheduleDTO);
+        WorkoutScheduleResponseDTO outputSchedule = workoutScheduleMapper.toResponseDTO(
                 this.workoutScheduleRepository.save(schedule)
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(outputSchedule);
     }
     @PreAuthorize("authz.canAccessWorkoutSchedule(authentication, id)")
     @PutMapping("/{id}")
-    public ResponseEntity<WorkoutScheduleDTO> updateSchedule(@PathVariable Long id, @RequestBody WorkoutScheduleDTO scheduleDTO, Authentication authentication) {
+    public ResponseEntity<WorkoutScheduleResponseDTO> updateSchedule(@PathVariable Long id, @RequestBody WorkoutScheduleRequestDTO scheduleDTO, Authentication authentication) {
         if (!this.workoutScheduleRepository.existsWorkoutScheduleById(id) || !Objects.equals(id, scheduleDTO.getId())) {
             throw new ResourceNotFoundException("Workout Schedule Not Found");
         }
-        WorkoutSchedule scheduleToSave = workoutScheduleMapper.workoutScheduleDTOToWorkoutSchedule(scheduleDTO);
-        WorkoutScheduleDTO outputSchedule = this.workoutScheduleMapper.workoutScheduleToWorkoutScheduleDTO(this.workoutScheduleRepository.save(scheduleToSave));
+        WorkoutSchedule scheduleToSave = workoutScheduleMapper.toEntity(scheduleDTO);
+        WorkoutScheduleResponseDTO outputSchedule = this.workoutScheduleMapper.toResponseDTO(this.workoutScheduleRepository.save(scheduleToSave));
         return ResponseEntity.status(HttpStatus.OK).body(outputSchedule);
     }
     @PreAuthorize("authz.canAccessWorkoutSchedule(authentication, id) || hasRole('ADMIN')")

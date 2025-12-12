@@ -1,15 +1,10 @@
 package com.example.workouttracker.DTO;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-
 import java.util.List;
 
-public class WorkoutScheduleDTO {
+public class WorkoutScheduleRequestDTO {
     private Long id;
-    private List<WorkoutDTO> workouts;
+    private List<Long> workoutsIds;
     private String username;
 
     public String getUsername() {
@@ -28,11 +23,11 @@ public class WorkoutScheduleDTO {
         this.id = id;
     }
 
-    public List<WorkoutDTO> getWorkouts() {
-        return workouts;
+    public List<Long> getWorkoutsIds() {
+        return workoutsIds;
     }
 
-    public void setWorkouts(List<WorkoutDTO> workouts) {
-        this.workouts = workouts;
+    public void setWorkoutsIds(List<Long> workoutsIds) {
+        this.workoutsIds = workoutsIds;
     }
 }
