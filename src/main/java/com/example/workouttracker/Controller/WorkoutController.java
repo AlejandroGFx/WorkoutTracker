@@ -1,15 +1,15 @@
 package com.example.workouttracker.Controller;
 
-import com.example.workouttracker.DTO.WorkoutDTO;
+import com.example.workouttracker.DTO.WorkoutRequestDTO;
+import com.example.workouttracker.DTO.WorkoutResponseDTO;
 import com.example.workouttracker.Entity.Exercise;
+import com.example.workouttracker.Entity.User;
 import com.example.workouttracker.Entity.Workout;
 import com.example.workouttracker.Exceptions.ResourceNotFoundException;
 import com.example.workouttracker.Mapper.WorkoutMapper;
 import com.example.workouttracker.Repository.ExerciseRepository;
 import com.example.workouttracker.Repository.UserRepository;
 import com.example.workouttracker.Repository.WorkoutRepository;
-import jakarta.annotation.Nullable;
-import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PostFilter;
@@ -34,59 +34,66 @@ class WorkoutController {
         this.workoutMapper = workoutMapper;
         this.userRepository = userRepository;
     }
+
     @PostFilter("filterObject.username == authentication.name")
     @GetMapping("")
-    public List<WorkoutDTO> getWorkouts(Authentication authentication) {
+    public List<WorkoutResponseDTO> getWorkouts(Authentication authentication) {
         List<Workout> workouts = this.workoutRepository.findAll();
         return this.workoutMapper.workoutsToWorkoutDTOs(workouts);
     }
+
     @PreAuthorize("isAuthenticated()")
     @PostMapping("")
-    public ResponseEntity<WorkoutDTO> addWorkout(@RequestBody WorkoutDTO workoutDTO) {
-        if (workoutRepository.existsByWorkoutNameAndDayOfWeek(workoutDTO.getWorkoutName(), workoutDTO.getDayOfWeek())) {
-            throw new ResourceNotFoundException("WORKOUT NOT FOUND");
+    public ResponseEntity<WorkoutResponseDTO> addWorkout(@RequestBody WorkoutRequestDTO workoutRequestDTO) {
+        String workoutName = workoutRequestDTO.getWorkoutName();
+        if (workoutRepository.existsByWorkoutNameAndDayOfWeek(workoutName, workoutRequestDTO.getDayOfWeek())) {
+            throw new ResourceNotFoundException("WORKOUT ALREADY EXISTS");
+        } else if (workoutRepository.existsByWorkoutName(workoutName)) {
+            throw new ResourceNotFoundException("WORKOUT ALREADY EXISTS");
         } else {
-            WorkoutDTO savedDTO = manageCreation(workoutDTO,null);
+            WorkoutResponseDTO savedDTO = manageCreation(workoutRequestDTO, null);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(savedDTO);
         }
     }
-    @PreAuthorize("authz.canAccessWorkout(authentication, id)")
+
+    @PreAuthorize("@authz.canAccessWorkout(#id, authentication)")
     @PutMapping("/{id}")
-    public ResponseEntity<WorkoutDTO> modifyWorkout(@RequestBody WorkoutDTO workoutDTO, @PathVariable Long id) {
-        if (!workoutRepository.existsByIdAndWorkoutNameAndDayOfWeek(id, workoutDTO.getWorkoutName(), workoutDTO.getDayOfWeek())) {
-            throw new ResourceNotFoundException("WORKOUT NOT FOUND");
-        } else {
-            WorkoutDTO workout =  manageCreation(workoutDTO, id);
+    public ResponseEntity<WorkoutResponseDTO> modifyWorkout(@RequestBody WorkoutRequestDTO workoutRequestDTO, @PathVariable Long id) {
+        Workout workoutCmp = this.workoutRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("WORKOUT NOT FOUND"));
+        User userCmp = this.userRepository.findByUsername(workoutRequestDTO.getUsername());
+        String workoutName = workoutRequestDTO.getWorkoutName();
+        if (this.workoutRepository.existsByWorkoutNameAndUser(workoutName, userCmp) && !workoutCmp.getWorkoutName().equals(workoutName)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+        else {
+            WorkoutResponseDTO workout = manageCreation(workoutRequestDTO, id);
             return ResponseEntity.ok().body(workout);
         }
     }
-    @PreAuthorize("authz.canAccessWorkout(authentication, id) || hasRole('ADMIN')")
+
+    @PreAuthorize("@authz.canAccessWorkout(#id, authentication) || hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteWorkout(@PathVariable Long id) {
         this.workoutRepository.deleteById(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("WORKOUT DELETED");
     }
 
-    private WorkoutDTO manageCreation(WorkoutDTO workoutDTO, @RequestParam(required = false) Long id) {
-        Workout workout = workoutMapper.workoutDTOToWorkout(workoutDTO);
-        List<Exercise> exerciseList = this.exerciseRepository.findAllById(workoutDTO.getExercisesIds());
+    private WorkoutResponseDTO manageCreation(WorkoutRequestDTO workoutRequestDTO, @RequestParam(required = false) Long id) {
+        Workout workout = workoutMapper.workoutDTOToWorkout(workoutRequestDTO);
+        List<Exercise> exerciseList = this.exerciseRepository.findAllById(workoutRequestDTO.getExercisesIds());
         workout.setExercises(exerciseList);
         if (id != null) {
             workout.setId(id);
         }
-        workout.setUser(this.userRepository.findByUsername(workoutDTO.getUsername()));
-        List<Long> dtoExercisesIds = workoutDTO.getExercisesIds();
-        List<Exercise> exercises = new ArrayList<>();
-        dtoExercisesIds.forEach(dtoExercisesId -> {
-            exercises.add(this.exerciseRepository.findById(dtoExercisesId)
-            .orElseThrow(() -> new ResourceNotFoundException("Exercise NOT FOUND")));
-        });
+        workout.setUser(this.userRepository.findByUsername(workoutRequestDTO.getUsername()));
+        List<Long> dtoExercisesIds = workoutRequestDTO.getExercisesIds();
+        List<Exercise> exercises = this.exerciseRepository.findAllById(dtoExercisesIds);
         workout.setExercises(exercises);
         Workout savedWorkout = workoutRepository.save(workout);
-        WorkoutDTO savedDTO = this.workoutMapper.workoutToWorkoutDTO(savedWorkout);
-        savedDTO.setExercisesIds(workoutDTO.getExercisesIds());
-        savedDTO.setUsername(workoutDTO.getUsername());
+        WorkoutResponseDTO savedDTO = this.workoutMapper.workoutToWorkoutResponseDTO(savedWorkout);
+        savedDTO.setUsername(workoutRequestDTO.getUsername());
         return savedDTO;
     }
 }

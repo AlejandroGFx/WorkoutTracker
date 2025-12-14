@@ -57,7 +57,7 @@ class WorkoutScheduleController {
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(outputSchedule);
     }
-    @PreAuthorize("authz.canAccessWorkoutSchedule(authentication, id)")
+    @PreAuthorize("@authz.canAccessWorkoutSchedule(#id, authentication)")
     @PutMapping("/{id}")
     public ResponseEntity<WorkoutScheduleResponseDTO> updateSchedule(@PathVariable Long id, @RequestBody WorkoutScheduleRequestDTO scheduleDTO, Authentication authentication) {
         if (!this.workoutScheduleRepository.existsWorkoutScheduleById(id) || !Objects.equals(id, scheduleDTO.getId())) {
@@ -67,7 +67,7 @@ class WorkoutScheduleController {
         WorkoutScheduleResponseDTO outputSchedule = this.workoutScheduleMapper.toResponseDTO(this.workoutScheduleRepository.save(scheduleToSave));
         return ResponseEntity.status(HttpStatus.OK).body(outputSchedule);
     }
-    @PreAuthorize("authz.canAccessWorkoutSchedule(authentication, id) || hasRole('ADMIN')")
+    @PreAuthorize("@authz.canAccessWorkoutSchedule(#id, authentication) || hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteSchedule(@PathVariable Long id, Authentication authentication) {
         this.workoutScheduleRepository.deleteById(id);

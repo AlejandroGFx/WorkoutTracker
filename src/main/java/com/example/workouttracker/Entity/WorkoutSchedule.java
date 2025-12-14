@@ -12,7 +12,7 @@ public class WorkoutSchedule {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column
-    @OneToMany
+    @ManyToMany
     private List<Workout> workouts;
 
     public User getUser() {
@@ -31,8 +31,8 @@ public class WorkoutSchedule {
         this.id = id;
     }
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(foreignKey = @ForeignKey(name = "user_id"))
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
     private User user;
 
     public List<Workout> getWorkouts() {

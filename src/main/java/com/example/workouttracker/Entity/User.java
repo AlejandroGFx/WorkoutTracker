@@ -24,11 +24,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(foreignKey = @ForeignKey(name = "workout_schedule_id"))
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<WorkoutSchedule> workoutSchedules;
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(foreignKey = @ForeignKey(name = "workout_schedule_id"))
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Workout> workouts;
 
     public List<Workout> getWorkouts() {

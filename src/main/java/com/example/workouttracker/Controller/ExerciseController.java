@@ -58,7 +58,7 @@ class ExerciseController {
 
     }
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/id")
+    @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteExercise(@PathVariable Long id) {
         this.exerciseRepository.deleteById(id);
         return ResponseEntity.status(HttpStatus.OK).body("Exercise deleted");

@@ -12,14 +12,12 @@ import org.springframework.stereotype.Service;
 
 @Service("authz")
 @Transactional
-class AuthorizationService {
+public class AuthorizationService {
 
-    private final UserRepository userRepository;
     private final WorkoutRepository workoutRepository;
     private final WorkoutScheduleRepository workoutScheduleRepository;
 
-    public AuthorizationService(UserRepository userRepository, WorkoutRepository workoutRepository, WorkoutScheduleRepository workoutScheduleRepository) {
-        this.userRepository = userRepository;
+    public AuthorizationService(WorkoutRepository workoutRepository, WorkoutScheduleRepository workoutScheduleRepository) {
         this.workoutRepository = workoutRepository;
         this.workoutScheduleRepository = workoutScheduleRepository;
     }

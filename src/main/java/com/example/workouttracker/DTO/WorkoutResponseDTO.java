@@ -1,17 +1,14 @@
 package com.example.workouttracker.DTO;
 
-import com.example.workouttracker.Entity.User;
-import jakarta.persistence.*;
-
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.List;
 
-public class WorkoutDTO {
+public class WorkoutResponseDTO {
     private Long id;
     private String workoutName;
 
-    private List<Long> exercisesIds;
+    private List<ExerciseDTO> exercises;
 
     private DayOfWeek dayOfWeek;
 
@@ -71,12 +68,12 @@ public class WorkoutDTO {
         this.dayOfWeek = dayOfWeek;
     }
 
-    public List<Long> getExercisesIds() {
-        return exercisesIds;
+    public List<ExerciseDTO> getExercises() {
+        return exercises;
     }
 
-    public void setExercisesIds(List<Long> exercisesIds) {
-        this.exercisesIds = exercisesIds;
+    public void setExercises(List<ExerciseDTO> exercises) {
+        this.exercises = exercises;
     }
 
     public Long getId() {
