@@ -20,7 +20,7 @@ import java.util.Objects;
 
 @RestController
 @RequestMapping("/workout_schedule")
-class WorkoutScheduleController {
+class  WorkoutScheduleController {
 
     private final WorkoutScheduleRepository workoutScheduleRepository;
     private final WorkoutScheduleMapper workoutScheduleMapper;

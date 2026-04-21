@@ -1,0 +1,153 @@
+### Variables Globales
+@host = http://localhost:8080
+
+# ==========================================
+# 1. AUTENTICACIÓN (LOGIN & REGISTER)
+# ==========================================
+
+### 1.1 Registrar un Usuario Nuevo (USER)
+POST {{host}}/register
+Content-Type: application/json
+
+{
+  "username": "juanperez",
+  "password": "password123",
+  "email": "juan@test.com",
+  "firstName": "Juan",
+  "lastName": "Pérez"
+}
+
+### 1.2 Login con el Usuario Nuevo (Guarda el Token automáticamente)
+POST {{host}}/login
+Content-Type: application/json
+
+{
+  "username": "juanperez",
+  "email": "juan@test.com",
+  "password": "password123"
+}
+
+> {%
+    client.global.set("auth_token", response.body.token);
+    client.log("Token de usuario guardado: " + response.body.token);
+%}
+
+### 1.3 Login como ADMIN (Usuario creado por el DataSeeder)
+# Necesario para crear Ejercicios
+POST {{host}}/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "email": "admin@gmail.com",
+  "password": "123456"
+}
+
+> {%
+    client.global.set("admin_token", response.body.token);
+    client.log("Token de ADMIN guardado.");
+%}
+
+### ==========================================
+# 2. EJERCICIOS (EXERCISES)
+### ==========================================
+
+### 2.1 Ver todos los ejercicios (Público o Autenticado según config)
+GET {{host}}/exercises
+Authorization: Bearer {{auth_token}}
+
+### 2.2 Crear un Ejercicio Nuevo (Solo ADMIN)
+POST {{host}}/exercises
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "name": "Sentadilla Búlgara",
+  "description": "Sentadilla a una pierna con elevación trasera",
+  "category": "STRENGTH",
+  "muscleGroups": ["QUADRICEPS", "ABDUCTOR"]
+}
+
+###==========================================
+### 3. WORKOUTS (RUTINAS)
+###==========================================
+
+### 3.1 Crear un Workout (Rutina de Pecho)
+# Asumimos que los IDs de ejercicios 1 y 2 existen (del DataSeeder)
+POST {{host}}/workouts
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "workoutName": "Día de Pecho Intenso",
+  "dayOfWeek": "MONDAY",
+  "startTime": "18:00:00",
+  "endTime": "19:30:00",
+  "comments": "Enfocarse en la técnica",
+  "exercisesIds": [1, 2],
+  "username": "juanperez"
+}
+
+> {% client.global.set("workout_id", response.body.id); %}
+
+### 3.2 Ver mis Workouts
+GET {{host}}/workouts
+Authorization: Bearer {{auth_token}}
+
+### 3.3 Modificar el Workout creado
+# Cambiamos la hora y el nombre
+PUT {{host}}/workouts/{{workout_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "id": {{workout_id}},
+  "workoutName": "Pecho y Tríceps",
+  "dayOfWeek": "MONDAY",
+  "startTime": "18:00:00",
+  "endTime": "20:00:00",
+  "comments": "Añadido extra de cardio al final",
+  "exercisesIds": [1, 2, 3],
+  "username": "juanperez"
+}
+
+### 3.4 Eliminar el Workout
+ DELETE {{host}}/workouts/{{workout_id}}
+ Authorization: Bearer {{auth_token}}
+
+
+# ==========================================
+# 4. WORKOUT SCHEDULE (CALENDARIO/HORARIO)
+# ==========================================
+
+### 4.1 Crear un Horario (Schedule)
+# Vinculamos el workout que acabamos de crear (usando su ID)
+POST {{host}}/workout_schedule
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "workoutsIds": [{{workout_id}}],
+  "username": "juanperez"
+}
+
+> {% client.global.set("schedule_id", response.body.id); %}
+
+### 4.2 Ver mis Horarios
+GET {{host}}/workout_schedule
+Authorization: Bearer {{auth_token}}
+
+### 4.3 Modificar el Horario
+PUT {{host}}/workout_schedule/{{schedule_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "id": {{schedule_id}},
+  "workoutsIds": [{{workout_id}}],
+  "username": "juanperez"
+}
+
+### 4.4 Eliminar el Horario
+DELETE {{host}}/workout_schedule/{{schedule_id}}
+Authorization: Bearer {{auth_token}}
